@@ -14,7 +14,10 @@ import {
   Award,
   Layers,
   FileCheck2,
-  SlidersHorizontal
+  SlidersHorizontal,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { UserRole } from '../../types';
@@ -26,7 +29,10 @@ export const Navbar: React.FC = () => {
     switchRole,
     activeTab,
     setActiveTab,
-    setShowOnboarding
+    setShowOnboarding,
+    currentUser,
+    logoutUser,
+    setIsAuthModalOpen
   } = useApp();
 
   const navItems = [
@@ -141,6 +147,27 @@ export const Navbar: React.FC = () => {
             >
               <Settings size={18} />
             </button>
+
+            {/* Auth Button (Login / Logout) */}
+            {currentUser ? (
+              <button
+                onClick={logoutUser}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 dark:bg-slate-800 dark:hover:bg-rose-950/40 text-slate-700 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700"
+                title="Đăng xuất khỏi tài khoản"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Đăng xuất</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold shadow-md shadow-rose-200 dark:shadow-none hover:opacity-95 transition-all"
+                title="Đăng nhập để lưu tiến độ"
+              >
+                <LogIn size={14} />
+                <span>Đăng nhập</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -8,7 +8,8 @@ import {
   MistakeItem,
   TestAttempt,
   Question,
-  Lesson
+  Lesson,
+  UserAccount
 } from '../types';
 import {
   loadProfile,
@@ -20,7 +21,11 @@ import {
   loadMistakes,
   saveMistakes,
   loadMemorizedLetters,
-  saveMemorizedLetters
+  saveMemorizedLetters,
+  loadUserAccounts,
+  saveUserAccounts,
+  loadCurrentSession,
+  saveCurrentSession
 } from '../utils/storage';
 import { calculateNextReview, isCardDue, SrsRating } from '../utils/srsHelper';
 import { audioService } from '../utils/audioHelper';
@@ -71,6 +76,13 @@ interface AppContextType {
   showToast: (text: string, type?: 'success' | 'info' | 'warning') => void;
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
+  currentUser: UserAccount | null;
+  loginUser: (email: string, pass: string) => boolean;
+  registerUser: (name: string, email: string, pass: string) => boolean;
+  logoutUser: () => void;
+  continueAsGuest: () => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,8 +121,90 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [completedLessons, setCompletedLessons] = useState(loadCompletedLessons);
   const [mistakes, setMistakes] = useState<MistakeItem[]>(loadMistakes);
   const [testAttempts, setTestAttempts] = useState<TestAttempt[]>(loadTestAttempts);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(!profile.onboarded);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(loadCurrentSession);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(() => {
+    return loadCurrentSession() === null;
+  });
+  const [userAccounts, setUserAccounts] = useState<UserAccount[]>(loadUserAccounts);
+
+  const loginUser = (email: string, pass: string): boolean => {
+    const acc = userAccounts.find(
+      (u) => u.email.trim().toLowerCase() === email.trim().toLowerCase() && u.password === pass
+    );
+    if (acc) {
+      setCurrentUser(acc);
+      saveCurrentSession(acc);
+      setProfile((prev) => ({
+        ...prev,
+        id: acc.id,
+        name: acc.name,
+        role: acc.role,
+        avatar: acc.avatar,
+      }));
+      setIsAuthModalOpen(false);
+      showToast(`Xin chào mừng, ${acc.name}! 👋`, 'success');
+      return true;
+    }
+    showToast('Email hoặc mật khẩu không chính xác!', 'warning');
+    return false;
+  };
+
+  const registerUser = (name: string, email: string, pass: string): boolean => {
+    if (userAccounts.some((u) => u.email.trim().toLowerCase() === email.trim().toLowerCase())) {
+      showToast('Email này đã được đăng ký tài khoản!', 'warning');
+      return false;
+    }
+    const newAccount: UserAccount = {
+      id: 'u_' + Date.now(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: pass,
+      role: 'student',
+      avatar: '🌟',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    const updated = [...userAccounts, newAccount];
+    setUserAccounts(updated);
+    saveUserAccounts(updated);
+    setCurrentUser(newAccount);
+    saveCurrentSession(newAccount);
+    setProfile((prev) => ({
+      ...prev,
+      id: newAccount.id,
+      name: newAccount.name,
+      role: newAccount.role,
+      avatar: newAccount.avatar,
+    }));
+    setIsAuthModalOpen(false);
+    showToast(`Đăng ký thành công! Chào mừng ${newAccount.name} đến với Hanguora! 🎉`, 'success');
+    return true;
+  };
+
+  const logoutUser = () => {
+    setCurrentUser(null);
+    saveCurrentSession(null);
+    setProfile((prev) => ({
+      ...prev,
+      name: 'Khách',
+      role: 'guest',
+      avatar: '👤',
+    }));
+    setIsAuthModalOpen(true);
+    showToast('Đã đăng xuất tài khoản.', 'info');
+  };
+
+  const continueAsGuest = () => {
+    setCurrentUser(null);
+    saveCurrentSession(null);
+    setProfile((prev) => ({
+      ...prev,
+      name: 'Khách (Chưa đăng nhập)',
+      role: 'guest',
+      avatar: '👤',
+    }));
+    setIsAuthModalOpen(false);
+    showToast('Bạn đang duyệt với tư cách Khách. Hãy đăng nhập để lưu tiến độ nhé!', 'info');
+  };
 
   useEffect(() => {
     saveProfile(profile);
@@ -278,6 +372,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const dueFlashcards = flashcards.filter(isCardDue);
 
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(!profile.onboarded);
+
   return (
     <AppContext.Provider
       value={{
@@ -312,7 +409,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toasts,
         showToast,
         showOnboarding,
-        setShowOnboarding
+        setShowOnboarding,
+        currentUser,
+        loginUser,
+        registerUser,
+        logoutUser,
+        continueAsGuest,
+        isAuthModalOpen,
+        setIsAuthModalOpen
       }}
     >
       {children}

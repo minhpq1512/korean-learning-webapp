@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from './context/AppContext';
 import { Navbar } from './components/common/Navbar';
 import { OnboardingModal } from './components/onboarding/OnboardingModal';
+import { AuthModal } from './components/auth/AuthModal';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { HangulHub } from './components/hangul/HangulHub';
 import { LessonListView } from './components/lessons/LessonListView';
@@ -84,6 +85,9 @@ export const AppContent: React.FC = () => {
 
       {/* Onboarding Wizard Modal */}
       <OnboardingModal />
+
+      {/* Authentication Modal (Login / Register / Guest) */}
+      <AuthModal />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { UserProfile, TestAttempt, Flashcard, FlashcardDeck, MistakeItem } from '../types';
+import { UserProfile, TestAttempt, Flashcard, FlashcardDeck, MistakeItem, UserAccount } from '../types';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'hanguora_user_profile',
@@ -8,7 +8,63 @@ const STORAGE_KEYS = {
   FLASHCARD_DECKS: 'hanguora_flashcard_decks',
   MISTAKES: 'hanguora_mistakes',
   MEMORIZED_LETTERS: 'hanguora_memorized_letters',
+  USER_ACCOUNTS: 'hanguora_user_accounts',
+  CURRENT_SESSION: 'hanguora_current_session',
 };
+
+export const INITIAL_DEMO_ACCOUNTS: UserAccount[] = [
+  {
+    id: 'u_student_demo',
+    name: 'Minh Anh (Học viên)',
+    email: 'hocvien@hanguora.vn',
+    password: '123',
+    role: 'student',
+    avatar: '🎓',
+    createdAt: '2026-11-20',
+  },
+  {
+    id: 'u_admin_demo',
+    name: 'Admin Hanguora',
+    email: 'admin@hanguora.vn',
+    password: 'admin',
+    role: 'admin',
+    avatar: '⚙️',
+    createdAt: '2026-11-20',
+  }
+];
+
+export function loadUserAccounts(): UserAccount[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.USER_ACCOUNTS);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  saveUserAccounts(INITIAL_DEMO_ACCOUNTS);
+  return INITIAL_DEMO_ACCOUNTS;
+}
+
+export function saveUserAccounts(accounts: UserAccount[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USER_ACCOUNTS, JSON.stringify(accounts));
+  } catch {}
+}
+
+export function loadCurrentSession(): UserAccount | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null; // By default requires login or guest choice
+}
+
+export function saveCurrentSession(account: UserAccount | null): void {
+  try {
+    if (account) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_SESSION, JSON.stringify(account));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
+    }
+  } catch {}
+}
 
 export const defaultProfile: UserProfile = {
   id: 'user_1',

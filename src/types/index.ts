@@ -16,6 +16,16 @@ export interface UserSettings {
   theme: 'light' | 'dark';
 }
 
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  avatar: string;
+  createdAt: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
